@@ -23,12 +23,21 @@ async def start(self):
     except ValueError as e:
         self.notify(str(e))
         return
-
-    market_names: List[Tuple[str, List[str]]] = [
-        (maker_market, [maker_trading_pair]),
-        (taker_market, [taker_trading_pair]),
-    ]
-
+    # Build market_names, merging trading pairs if same exchange is used for maker and taker
+    if maker_market == taker_market:
+        # Same exchange for both - combine trading pairs into one entry
+        combined_pairs = [maker_trading_pair]
+        if taker_trading_pair != maker_trading_pair:
+            combined_pairs.append(taker_trading_pair)
+        market_names: List[Tuple[str, List[str]]] = [
+            (maker_market, combined_pairs),
+        ]
+    else:
+        # Different exchanges - separate entries
+        market_names: List[Tuple[str, List[str]]] = [
+            (maker_market, [maker_trading_pair]),
+            (taker_market, [taker_trading_pair]),
+        ]
     await self.initialize_markets(market_names)
     maker_data = [self.markets[maker_market], maker_trading_pair] + list(maker_assets)
     taker_data = [self.markets[taker_market], taker_trading_pair] + list(taker_assets)
