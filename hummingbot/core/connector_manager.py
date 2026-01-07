@@ -53,8 +53,17 @@ class ConnectorManager:
         try:
             # Check if connector already exists
             if connector_name in self.connectors:
-                self._logger.warning(f"Connector {connector_name} already exists")
-                return self.connectors[connector_name]
+                existing_connector = self.connectors[connector_name]
+                # Check if we need to add new trading pairs
+                existing_pairs = set(existing_connector.trading_pairs or [])
+                new_pairs = set(trading_pairs) - existing_pairs
+                if new_pairs:
+                    self._logger.warning(
+                        f"Connector {connector_name} already exists with pairs {existing_pairs}. "
+                        f"Cannot add new pairs {new_pairs} dynamically. "
+                        f"Please ensure all trading pairs are specified when first creating the connector."
+                    )
+                return existing_connector
 
             # Handle paper trading connector names
             if connector_name.endswith("_paper_trade"):
